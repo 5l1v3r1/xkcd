@@ -1,6 +1,7 @@
 package xkcdrand_test
 
 import (
+	"math"
 	"math/rand"
 	"testing"
 
@@ -80,6 +81,10 @@ func TestFloat64(t *testing.T) {
 		{
 			tag: "basic",
 			num: 0.5,
+		}, {
+			tag: "high precision",
+			// Numbers must be between [0, 1)
+			num: math.Pi / 10,
 		},
 	} {
 		t.Run(test.tag, func(t *testing.T) {
