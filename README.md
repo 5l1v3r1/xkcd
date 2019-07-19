@@ -37,7 +37,7 @@ var (
 // float value when called with rand.Rand.Float64 (float32s will automatically
 // work with lesser precision):
 var (
-    mixedRng := rand.New(xkcdrand.Sequence(0, xkcdrand.Float32(0.5)))
+    mixedRng := rand.New(xkcdrand.Sequence(0, xkcdrand.Float64(0.5)))
 )
 
 // To inject 64bit unsigned integers with the most significant bit set, you
@@ -57,6 +57,13 @@ rand.New(rand.NewSource(1))
 
 // Recommended way to have different behavior across executions:
 rand.NewSource(time.Now().UTC().UnixNano())
+
+// If you need a goroutine safe rand.Rand
+import (
+  "github.com/inlined/lockedsource"
+)
+
+rand.NewSource(lockedsource.New())
 ```
 
 ## Caveats
