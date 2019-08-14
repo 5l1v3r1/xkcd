@@ -66,5 +66,5 @@ func() {}
 
 ## Caveats
 
-1. To avoid type issues, `xkcdrand` can only return uint63 numbers.
+1. To avoid type issues, `xkcd.Rand` can only return uint63 numbers.
 2. Some methods (Read, Seed, Shuffle) are not implemented.
