@@ -23,62 +23,48 @@ struct.
 // A fixed RNG implementation
 func getRandomNumber() uint64 {
     // Chosen by fair dice roll. Guaranteed to be random.
-    rng = rand.New(xkcd.Sequence(4))
-    return rng.Uint63()
+    return xkcd.Rand(4).Uint63()
 }
 
-// A repeating sequence RNG
 var (
-    bitmaskRng := rand.New(xckdrand.Sequence(0, 1, 2, 4, 8, 16))
-)
+  // A repeating sequence RNG
+  bitmaskRng = xckd.Rand(0, 1, 2, 4, 8, 16))
 
-// To inject Floats, you need to use a helper function, which fails at high
-// precision floats. This injects an int64 that will turn into the desired
-// float value when called with rand.Rand.Float64 (float32s will automatically
-// work with lesser precision):
-var (
-    mixedRng := rand.New(xkcdrand.Sequence(0, xkcdrand.Float64(0.5)))
-)
+  // A sequence that uses floats:
+  mixedRng = xkcd.Rand(5, 0.5)
 
-// To inject 64bit unsigned integers with the most significant bit set, you
-// a helper (uint64s that can be represented in int64s work automatically)
-var (
-    largeRng := rand.New(xkcdrand.Sequence(xkcdrand.Uint64(0xFFFFFFFFFFFFFFFF)))
+  // Int64s should automatically work with overflows, but
+  // you can be explicit by casting to a uint64
+  largeRng = xkcd.Rand(uint64(0xFFFFFFFFFFFFFFFF))
 )
 ```
 
 ### Production code
 
 ```golang
-// To create a rand.Rand object in production code, use one fo the following:
+// This library creates an object that has the same methods as the `Rand`
+// struct in `math.Rand`. Unfortunately the struct is very hard to fake,
+// so a matching interface is available at github.com/inlined/rand. This
+// package defines an interface compatible with xkcd.Rand and default
+// implementations built atop `math/rand`.
 
-// Default, unseeded, behavior of the top-level rand library functions:
-rand.New(rand.NewSource(1))
-
-// Recommended way to have different behavior across executions:
-rand.NewSource(time.Now().UTC().UnixNano())
-
-// If you need a goroutine safe rand.Rand
 import (
-  "github.com/inlined/lockedsource"
+  "github.com/inlined/rand"
 )
 
-rand.NewSource(lockedsource.New())
+var rng
+
+func() {}
+  // Default, unseeded, behavior of the top-level rand library functions:
+  // As a global, it's best to use locking. If you have goroutine affinity,
+  // you can save mutexes by using rand.New()
+  rng = rand.NewLocking()
+
+  // Recommended way to have different behavior across executions:
+  rand.NewSource(time.Now().UTC().UnixNano())
 ```
 
 ## Caveats
 
 1. To avoid type issues, `xkcdrand` can only return uint63 numbers.
-2. Unlike the top-level rand functions, `rand.Rand` is not inherently goroutine
-   safe! The top-level `rand` functions depend on a hidden lockedSource. If you
-   can dedicate one `rand.Rand` per goroutine, you can avoid locking. If you
-   want an injectable `rand.Rand` that _is_ coroutine safe, you can get the
-   vendored code for the hidden `rand.Source` at
-   github.com/inlined/lockedsource
-
-## Aside
-
-This was a very interesting excercise in bit manipulation in Go. Since Go is
-so strict with types, converting between int64, uint64, and float isn't as
-simple as a `reinterpret_cast<>` in C++. There's a very good chance I'm missing
-something simple and would love an issue to help me reduce complexity.
+2. Some methods (Read, Seed, Shuffle) are not implemented.
