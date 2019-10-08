@@ -57,12 +57,32 @@ func (r *fakeRand) NormFloat64() float64 {
 	return r.Float64()
 }
 
+// Perm creates a list of 0..n and swaps indexes [0, n)
+// with random indexes [1, i) from the tape.
 func (r *fakeRand) Perm(n int) []int {
 	a := make([]int, n)
 	for i := 0; i < n; i++ {
-		a[i] = int(r.Int31n(int32(n)))
+		a[i] = i
+	}
+	for i := 1; i < n; i++ {
+		j := int(r.Int31n(int32(n)))
+		tmp := a[i]
+		a[i] = a[j]
+		a[j] = tmp
+
 	}
 	return a
+}
+
+// Deal is an override of the rand.Deal implementation to avoid
+// using Perm. Instead fakeRand will take the next k elements from
+// the tape modulo n.
+func (r *fakeRand) Deal(n, k int) []int {
+	v := make([]int, k)
+	for i := range v {
+		v[i] = r.Int() % n
+	}
+	return v
 }
 
 // Read is not implemented because it is likely to be ambiguous regarding
